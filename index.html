@@ -3,339 +3,403 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AlgoFlow: Sorting Visualizer</title>
+    <title>AlgoFlow: Step-by-Step Learning</title>
     <style>
-        /* --- 1. Trendy UI Setup (Glassmorphism & Variables) --- */
+        /* --- 1. Trendy UI Setup --- */
         :root {
             --bg-dark: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-bg: rgba(255, 255, 255, 0.08);
             --glass-border: rgba(255, 255, 255, 0.1);
-            --primary: #8b5cf6;  /* Purple */
-            --accent: #f43f5e;   /* Pink (Swap) */
-            --compare: #f59e0b;  /* Amber (Compare) */
-            --done: #10b981;     /* Emerald (Sorted) */
+            --primary: #8b5cf6;
+            --accent: #f43f5e;   /* Swap */
+            --compare: #f59e0b;  /* Compare */
+            --done: #10b981;     /* Sorted */
             --text-main: #f8fafc;
-            --text-sub: #94a3b8;
         }
 
         body {
             background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 20%),
-                              radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.15) 0%, transparent 20%);
+            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
             color: var(--text-main);
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-            margin: 0;
+            font-family: 'Pretendard', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
+            margin: 0;
             overflow: hidden;
         }
 
-        /* --- 2. Layout Components --- */
-        header {
-            margin-top: 2rem;
-            text-align: center;
-            z-index: 10;
-        }
-        
         h1 {
-            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
             font-weight: 800;
-            letter-spacing: -0.05em;
-            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+            background: linear-gradient(to right, #a78bfa, #2dd4bf);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
         }
 
+        /* --- 2. Control Panel --- */
         .controls {
             display: flex;
             gap: 1rem;
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
             padding: 1rem 2rem;
-            border-radius: 20px;
+            border-radius: 16px;
             border: 1px solid var(--glass-border);
-            margin-bottom: 2rem;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            margin-bottom: 3rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        button, select {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover:not(:disabled) { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-primary { background: var(--primary); border: none; }
+        .btn-primary:hover:not(:disabled) { background: #7c3aed; box-shadow: 0 0 15px var(--primary); }
+        
+        .btn-step { background: var(--compare); border: none; color: #1e293b; }
+        .btn-step:hover:not(:disabled) { background: #fbbf24; }
+
+        /* --- 3. Visualization Stage --- */
+        .stage-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem; /* Space between blocks */
+            min-height: 200px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 1000px;
+        }
+
+        /* --- 4. Number Blocks (Cards) --- */
+        .block {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--glass-border);
+            border-radius: 16px;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-main);
+            transition: all 0.4s ease; /* Smooth transition */
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        /* States */
+        .block.compare {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: var(--compare);
+            color: var(--compare);
+            transform: scale(1.1);
             z-index: 10;
         }
 
-        /* --- 3. UI Elements (Buttons & Selects) --- */
-        select, button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--glass-border);
-            color: white;
-            padding: 0.6rem 1.2rem;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s ease;
+        .block.swap {
+            background: rgba(244, 63, 94, 0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-20px) scale(1.1); /* Lift up effect */
+            z-index: 10;
         }
 
-        button:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
-        button.primary { background: var(--primary); border: none; }
-        button.primary:hover { background: #7c3aed; box-shadow: 0 0 15px var(--primary); }
-        
-        .stage-container {
-            flex-grow: 1;
-            width: 90%;
-            max-width: 1000px;
-            height: 500px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            border: 1px solid var(--glass-border);
-            display: flex;
-            align-items: flex-end; /* Bars align to bottom */
-            justify-content: center;
-            padding: 2rem;
-            box-sizing: border-box;
-            gap: 4px;
-            position: relative;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+        .block.sorted {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--done);
+            color: var(--done);
         }
 
-        /* --- 4. Visualization Bars --- */
-        .bar {
-            flex: 1;
-            background: linear-gradient(to top, var(--primary), #a78bfa);
-            border-radius: 8px 8px 0 0;
-            transition: height 0.3s ease, background-color 0.2s;
-            position: relative;
+        .status-text {
+            margin-top: 2rem;
+            font-size: 1.2rem;
+            color: #94a3b8;
+            min-height: 1.5em;
         }
-
-        .bar.compare { background: var(--compare); box-shadow: 0 0 10px var(--compare); }
-        .bar.swap { background: var(--accent); box-shadow: 0 0 15px var(--accent); }
-        .bar.sorted { background: var(--done); box-shadow: 0 0 10px var(--done); }
-
-        /* Algorithm Info Badge */
-        .info-badge {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.4);
-            padding: 10px 20px;
-            border-radius: 12px;
-            color: var(--text-sub);
-            font-size: 0.9rem;
-        }
-        #complexity { color: var(--accent); font-weight: bold; }
 
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>AlgoFlow</h1>
-        <p style="color: var(--text-sub);">Interactive Sorting Simulator</p>
+    <header style="text-align:center;">
+        <h1>Algorithm Studio</h1>
+        <div id="msg" class="status-text">Select an algorithm to start</div>
     </header>
 
-    <div class="controls">
-        <select id="algoSelect" onchange="resetArray()">
-            <option value="bubble">🫧 Bubble Sort</option>
-            <option value="insertion">📥 Insertion Sort</option>
-            <option value="quick">⚡ Quick Sort</option>
-        </select>
-        <button onclick="resetArray()">🔄 New Array</button>
-        <button class="primary" onclick="startSort()">▶ Run Simulation</button>
-    </div>
-
     <div class="stage-container" id="stage">
-        <div class="info-badge">
-            Time Complexity: <span id="complexity">O(n²)</span>
         </div>
+
+    <div class="controls">
+        <select id="algoSelect" onchange="reset()">
+            <option value="bubble">Bubblesort</option>
+            <option value="insertion">Insertion Sort</option>
+            <option value="quick">Quick Sort</option>
+        </select>
+        
+        <button onclick="reset()">🔄 Reset</button>
+        <div style="width: 1px; background: rgba(255,255,255,0.2); margin: 0 10px;"></div>
+        
+        <button id="btnAuto" class="btn-primary" onclick="start('auto')">▶ Auto Play (Slow)</button>
+        <button id="btnManual" class="btn-step" onclick="start('manual')">🦶 Step Mode</button>
+        <button id="btnNext" onclick="nextStepTrigger()" disabled>Next ➡</button>
     </div>
 
     <script>
-        // --- Core Logic ---
-        const stage = document.getElementById('stage');
-        const complexityDisplay = document.getElementById('complexity');
+        // --- Configuration ---
+        const STAGE = document.getElementById('stage');
+        const MSG = document.getElementById('msg');
+        const ARRAY_SIZE = 8;
         let array = [];
-        let bars = [];
+        let blockElements = [];
+        
+        // --- State Management ---
         let isSorting = false;
-        const size = 30; // Number of bars
-        const delayTime = 50; // Animation speed (ms)
+        let isPaused = false;
+        let resolveNextStep = null; // Promise resolver for manual stepping
+        let currentSpeed = 1000; // 1 second delay for auto mode
 
-        // Sound effect (Oscillator) - Optional cool feature
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playTone(freq) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.frequency.value = freq;
-            osc.type = 'sine';
-            gain.gain.value = 0.05;
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.1);
-            osc.stop(audioCtx.currentTime + 0.1);
-        }
-
-        // 1. Initialize
-        function resetArray() {
-            if (isSorting) { location.reload(); return; } // Simple stop mechanism
-            stage.innerHTML = '<div class="info-badge">Time Complexity: <span id="complexity"></span></div>';
+        // --- Initialization ---
+        function generateArray() {
             array = [];
-            bars = [];
+            // Generate distinct numbers for better clarity
+            while(array.length < ARRAY_SIZE){
+                let num = Math.floor(Math.random() * 90) + 10;
+                if(array.indexOf(num) === -1) array.push(num);
+            }
+        }
+
+        function drawBlocks() {
+            STAGE.innerHTML = '';
+            blockElements = [];
+            array.forEach(val => {
+                const div = document.createElement('div');
+                div.classList.add('block');
+                div.innerText = val;
+                STAGE.appendChild(div);
+                blockElements.push(div);
+            });
+        }
+
+        function reset() {
+            if (isSorting) { location.reload(); return; } // Hard reset if running
+            generateArray();
+            drawBlocks();
+            updateMsg("Ready to sort.");
+            enableControls(true);
+            document.getElementById('btnNext').disabled = true;
+        }
+
+        // --- Core Control Logic (The Brain) ---
+        
+        // This function halts the loop until condition is met
+        async function sync() {
+            if (!isSorting) return;
+
+            if (isPaused) {
+                // Manual Mode: Wait until user clicks "Next"
+                updateMsg("Waiting for next step...");
+                document.getElementById('btnNext').disabled = false;
+                document.getElementById('btnNext').classList.add('btn-primary'); // Highlight
+                
+                await new Promise(resolve => { resolveNextStep = resolve; });
+                
+                document.getElementById('btnNext').disabled = true;
+                document.getElementById('btnNext').classList.remove('btn-primary');
+            } else {
+                // Auto Mode: Just wait for timer
+                await new Promise(resolve => setTimeout(resolve, currentSpeed));
+            }
+        }
+
+        function nextStepTrigger() {
+            if (resolveNextStep) {
+                resolveNextStep();
+                resolveNextStep = null;
+            }
+        }
+
+        async function start(mode) {
+            if (isSorting) return;
+            isSorting = true;
+            isPaused = (mode === 'manual');
             
-            // Update Complexity Text
+            enableControls(false); // Disable start buttons
+            
             const algo = document.getElementById('algoSelect').value;
-            const complexText = document.getElementById('complexity');
-            if(algo === 'quick') complexText.innerText = 'O(n log n)';
-            else complexText.innerText = 'O(n²)';
+            updateMsg(mode === 'auto' ? "Auto Mode: Running..." : "Manual Mode: Press Next");
 
-            // Generate Random Bars
-            for (let i = 0; i < size; i++) {
-                const value = Math.floor(Math.random() * 80) + 10; // 10% ~ 90% height
-                array.push(value);
+            if (algo === 'bubble') await bubbleSort();
+            else if (algo === 'insertion') await insertionSort();
+            else if (algo === 'quick') await quickSort(0, array.length - 1);
 
-                const bar = document.createElement('div');
-                bar.classList.add('bar');
-                bar.style.height = `${value}%`;
-                stage.appendChild(bar);
-                bars.push(bar);
+            isSorting = false;
+            updateMsg("Sorting Complete! 🎉");
+            enableControls(true);
+        }
+
+        function enableControls(enabled) {
+            document.getElementById('btnAuto').disabled = !enabled;
+            document.getElementById('btnManual').disabled = !enabled;
+            document.getElementById('algoSelect').disabled = !enabled;
+        }
+
+        function updateMsg(text) {
+            MSG.innerText = text;
+        }
+
+        // --- Visualization Helper ---
+        function setClass(idx, className) {
+            if(blockElements[idx]) {
+                blockElements[idx].className = 'block'; // reset
+                if(className) blockElements[idx].classList.add(className);
             }
         }
 
-        // Helper: Sleep for animation
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
+        function swapVisual(i, j) {
+            // Swap values in DOM
+            let temp = blockElements[i].innerText;
+            blockElements[i].innerText = blockElements[j].innerText;
+            blockElements[j].innerText = temp;
         }
 
-        // Helper: Visual Updates
-        async function updateBar(index, colorType, height = null) {
-            if(height !== null) bars[index].style.height = `${height}%`;
-            
-            bars[index].className = 'bar'; // reset
-            if(colorType) bars[index].classList.add(colorType);
-            
-            if(colorType === 'compare' || colorType === 'swap') {
-                playTone(200 + (array[index] * 5)); // Sound based on height
-            }
-        }
+        // --- Algorithms ---
 
-        // --- Sorting Algorithms ---
-
-        // 🫧 Bubble Sort
+        // 1. Bubble Sort
         async function bubbleSort() {
-            for (let i = 0; i < array.length; i++) {
-                for (let j = 0; j < array.length - i - 1; j++) {
-                    await updateBar(j, 'compare');
-                    await updateBar(j + 1, 'compare');
-                    await sleep(delayTime);
+            for (let i = 0; i < ARRAY_SIZE; i++) {
+                for (let j = 0; j < ARRAY_SIZE - i - 1; j++) {
+                    // Compare
+                    setClass(j, 'compare');
+                    setClass(j + 1, 'compare');
+                    updateMsg(`Comparing ${array[j]} and ${array[j+1]}`);
+                    await sync();
 
                     if (array[j] > array[j + 1]) {
                         // Swap Logic
-                        await updateBar(j, 'swap');
-                        await updateBar(j + 1, 'swap');
-                        
+                        setClass(j, 'swap');
+                        setClass(j + 1, 'swap');
+                        updateMsg(`Swapping ${array[j]} > ${array[j+1]}`);
+                        await sync(); // Visual pause for swap
+
                         let temp = array[j];
                         array[j] = array[j + 1];
                         array[j + 1] = temp;
-
-                        await updateBar(j, 'swap', array[j]);
-                        await updateBar(j + 1, 'swap', array[j + 1]);
-                        await sleep(delayTime);
+                        swapVisual(j, j+1);
                     }
-                    await updateBar(j, '');
-                    await updateBar(j + 1, '');
+                    // Reset
+                    setClass(j, '');
+                    setClass(j + 1, '');
                 }
-                await updateBar(array.length - i - 1, 'sorted');
+                setClass(ARRAY_SIZE - i - 1, 'sorted');
             }
-            // Finish remaining
-            for(let k=0; k<array.length; k++) await updateBar(k, 'sorted');
+             // Ensure all are marked sorted at end
+             for(let k=0; k<ARRAY_SIZE; k++) setClass(k, 'sorted');
         }
 
-        // 📥 Insertion Sort
+        // 2. Insertion Sort
         async function insertionSort() {
-            for (let i = 1; i < array.length; i++) {
+            setClass(0, 'sorted'); // First element is implicitly sorted
+            
+            for (let i = 1; i < ARRAY_SIZE; i++) {
                 let current = array[i];
                 let j = i - 1;
                 
-                await updateBar(i, 'swap'); // Selected
-                await sleep(delayTime);
+                setClass(i, 'swap'); // Selected
+                updateMsg(`Selected ${current} to insert`);
+                await sync();
 
                 while (j >= 0 && array[j] > current) {
-                    await updateBar(j, 'compare');
-                    await sleep(delayTime);
+                    setClass(j, 'compare');
+                    setClass(j + 1, 'swap'); // Position being moved to
+                    updateMsg(`${array[j]} > ${current}, shifting right`);
+                    await sync();
                     
                     array[j + 1] = array[j];
-                    await updateBar(j + 1, 'swap', array[j + 1]);
+                    swapVisual(j, j+1); // Technically shift visual
                     
-                    await updateBar(j, ''); // reset color
+                    setClass(j + 1, 'sorted'); // Part of sorted array
+                    setClass(j, '');
                     j--;
                 }
                 array[j + 1] = current;
-                await updateBar(j + 1, 'sorted', current);
-                await sleep(delayTime);
+                // Update the value at the insertion point just in case visual drift
+                blockElements[j+1].innerText = current; 
                 
-                // Color fix for sorted part visualization
-                for(let k=0; k<=i; k++) bars[k].classList.add('sorted');
+                // Color entire sorted section
+                for(let k=0; k<=i; k++) setClass(k, 'sorted');
+                await sync();
             }
         }
 
-        // ⚡ Quick Sort
-        async function quickSort(start = 0, end = array.length - 1) {
-            if (start < end) {
-                let pivotIndex = await partition(start, end);
-                await Promise.all([
-                    quickSort(start, pivotIndex - 1),
-                    quickSort(pivotIndex + 1, end)
-                ]);
-            } else if (start >= 0 && end >= 0 && start === end) {
-                 await updateBar(start, 'sorted');
+        // 3. Quick Sort
+        async function quickSort(start, end) {
+            if (start >= end) {
+                if(start >= 0 && start < ARRAY_SIZE) setClass(start, 'sorted');
+                return;
             }
+
+            let pivotIndex = await partition(start, end);
+            
+            // Mark pivot as sorted specifically
+            setClass(pivotIndex, 'sorted'); 
+            
+            await quickSort(start, pivotIndex - 1);
+            await quickSort(pivotIndex + 1, end);
         }
 
         async function partition(start, end) {
             let pivotValue = array[end];
             let pivotIndex = start;
             
-            await updateBar(end, 'swap'); // Pivot visual
+            setClass(end, 'swap'); // Pivot
+            updateMsg(`Pivot chosen: ${pivotValue}`);
+            await sync();
 
             for (let i = start; i < end; i++) {
-                await updateBar(i, 'compare');
-                await sleep(delayTime);
+                setClass(i, 'compare');
+                updateMsg(`Checking if ${array[i]} < Pivot(${pivotValue})`);
+                await sync();
 
                 if (array[i] < pivotValue) {
+                    updateMsg(`${array[i]} is smaller, swapping to left`);
+                    setClass(i, 'swap');
+                    setClass(pivotIndex, 'swap');
+                    await sync();
+
                     [array[i], array[pivotIndex]] = [array[pivotIndex], array[i]];
+                    swapVisual(i, pivotIndex);
                     
-                    await updateBar(i, 'swap', array[i]);
-                    await updateBar(pivotIndex, 'swap', array[pivotIndex]);
-                    await sleep(delayTime);
-                    
-                    await updateBar(pivotIndex, '');
+                    setClass(pivotIndex, ''); // Reset color
                     pivotIndex++;
                 }
-                await updateBar(i, '');
+                setClass(i, '');
             }
             
+            updateMsg(`Placing Pivot in correct position`);
+            swapVisual(pivotIndex, end);
             [array[pivotIndex], array[end]] = [array[end], array[pivotIndex]];
-            await updateBar(pivotIndex, 'sorted', array[pivotIndex]); // Pivot reached final spot
-            await updateBar(end, '', array[end]);
             
             return pivotIndex;
         }
 
-
-        // --- Control ---
-        async function startSort() {
-            if(isSorting) return;
-            isSorting = true;
-            const algo = document.getElementById('algoSelect').value;
-            
-            if (algo === 'bubble') await bubbleSort();
-            else if (algo === 'insertion') await insertionSort();
-            else if (algo === 'quick') await quickSort();
-            
-            isSorting = false;
-        }
-
-        // Init
-        resetArray();
+        // Run on load
+        reset();
 
     </script>
 </body>
